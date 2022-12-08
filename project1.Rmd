@@ -1,0 +1,223 @@
+---
+title: "Project 1"
+author: "Khalil Albattashi"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: show
+    csl: biomed-central.csl
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    number_sections: yes
+    theme: journal
+    toc: yes
+    toc_float: yes
+    word_document:
+      toc: yes
+      toc_depth: '4'
+      pdf_document:
+      df_print: kable
+      fig_caption: yes
+      fig_height: 6
+      fig_width: 7
+      highlight: tango
+
+#bibliography: project.bib
+abstract: This Project analysis the methods used to detect defects within NASA software code. Four methods were used including lines of code, cycloclamatic complexity, Essential Complexity, and Design Complexity. the methods were analyzed using probabilities  for accuracy, detection rate, false alarm rate, and precision. the most effective of the methods showed to be lines of code
+---
+
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction to the data
+
+## Data and variables(see MS pg. 77,125)
+The problem is assigning different methods to detect defects in software code in NASA instruments. the data in SWDETECTS contains models that were evaluated "true" and "false" in terms of defects  
+
+## Summary Table 
+```{r}
+library(data.table)
+data = data.table(
+  id = c("", "Algorithm","Predicts", "Defects" ),
+  a = c("", "No", "Yes", ""),
+  b = c("False", "a", "c", ""),
+  c = c("True", "b", "d", "")
+)
+data
+```
+
+
+
+### Make formulae 
+
+Using $\LaTeX$ construct the formulae for 
+
+$$
+\begin{eqnarray}
+\ Accurecy:&  \ P(Algorithm \ is \  correct) = & \frac {(a + b)}{(a + b + c + d)}
+\end{eqnarray}
+$$
+$$
+\begin{eqnarray}
+\ Detection\ rate :  \ P(predict \  defect \ | \  module \ has \  defect)& = & \frac {(d)}{(b + d)}
+\end{eqnarray}
+$$
+$$
+\begin{eqnarray}
+\ False \ alarm \ rate : \ P(predict \  defect \ | \  module \ has \  no \ defect) & = & \frac {(c)}{(a + c)}
+\end{eqnarray}
+$$
+$$
+\begin{eqnarray}
+\ Precision \ P(model \ has  \  defect \ | \  predict \  defect)& = & \frac {(d)}{(c + d)}
+\end{eqnarray}
+$$
+
+# R functions
+Using the above definitions make R functions that will create the required probabilities, please remove `eval=FALSE` when creating the functions :
+
+```{r accuracy, eval=FALSE}
+acc=function(a,b,c,d)
+{
+  (a + b)/(a + b + c + d)
+}
+```
+
+```{r detecton, eval=FALSE}
+detect=function(b,d)
+{
+  d / (b + d)
+}
+```
+
+```{r alarm, eval=FALSE}
+falarm=function(a,c)
+{
+  c / (a + c)
+}
+```
+
+```{r precision, eval=FALSE}
+prec=function(c,d)
+{
+  d / (c + d)
+}
+```
+
+
+# Create the tables in Figure SIA3.1
+
+the first table and barplot provides the values for LOC > 50 which shows the probability of LOC predictor
+
+```{r }
+swd=read.csv("swdefects.csv")
+head(swd)
+
+```
+```{r}
+tab=with(swd, table(predict.loc.50,defect))
+barplot(tab, beside=TRUE, leg=TRUE)
+
+tab2=addmargins(tab)
+tab2
+```
+```{r}
+tab=with(swd, table(predict.vg.10,defect))
+barplot(tab, beside=TRUE, leg=TRUE)
+
+tab3=addmargins(tab)
+tab3
+```
+```{r}
+tab=with(swd, table(predict.evg.14.5,defect))
+barplot(tab, beside=TRUE, leg=TRUE)
+
+tab4=addmargins(tab)
+tab4
+```
+```{r}
+tab=with(swd, table(predict.ivg.9.2,defect))
+barplot(tab, beside=TRUE, leg=TRUE)
+
+tab3=addmargins(tab)
+tab3
+```
+
+
+
+
+
+
+
+
+# Create the corrected table on page 127 (there are mistakes in it), TABLE SIA3.3
+
+```{r}
+acc=function(a,b,c,d)
+{
+  (a + b)/(a + b + c + d)
+}
+
+detect=function(b,d)
+{
+  d / (b + d)
+}
+
+falarm=function(a,c)
+{
+  c / (a + c)
+}
+
+prec=function(c,d)
+{
+  d / (c + d)
+}
+
+accloc = acc(400, 29, 49, 20)
+detectloc = detect(29, 20)
+falarmloc= falarm(400, 49)
+precloc = prec(49, 20)
+
+accvg = acc(397, 35, 52, 14)
+detectvg = detect(35, 14)
+falarmvg = falarm(397, 52)
+precvg = prec(52, 14)
+
+accevg = acc(441, 47, 8, 2)
+detectevg = detect(47, 2)
+falarmevg = falarm(441, 8)
+predevg = prec(8, 2)
+
+accivg = acc(422, 38, 27, 11)
+detectivg = detect(38, 11)
+falarmivg = falarm(422, 27)
+predivg = prec(27, 11)
+
+tab3 = matrix(round(c(accloc, accvg, accevg, accivg, detectloc, detectvg, detectevg, detectivg, falarmloc, falarmvg, falarmevg, falarmivg, precloc, precvg, predevg, predivg), 3), ncol = 4, byrow= FALSE)
+
+rownames(tab3) = (c("Lines of Code", "Cycloclamatic Complexity", "Esseintial Complexity", "Design Complexity"))
+
+colnames(tab3) = (c("Accuracy", "Detection Rate", "False Alarm Rate", "Precision"))
+
+tab3 = as.table(tab3)
+tab3
+```
+
+```{r}
+mybar = function(tab, dec){
+  barplot(tab, dec, beside = TRUE, leg = TRUE, col = rainbow(4))
+  return (list(tab, round(dec)))
+}
+mybar(tab=tab3, dec = 4)
+```
+
+
+    
+
+
